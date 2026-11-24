@@ -83,6 +83,8 @@ class Env(BaseSettings):
     LIGHT_COMMAND: str | None = None
     BUTTON_LOCK_CHANGED: str | None = None
 
+    STARTUP: str | None = None
+
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -91,10 +93,13 @@ env = Env()
 
 
 async def websocket_loop():
+    play_random_sound(env.STARTUP)
+
     while True:
         try:
             async with websockets.connect(env.ws_url) as websocket:
                 log.info(f"Connected to LVA at {env.ws_url}")
+
                 while True:
                     data = await websocket.recv()
                     log.debug(f"Event from lva: {data}")
