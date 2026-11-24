@@ -1,0 +1,65 @@
+services:
+  sounds-peripheral:
+    image: ghcr.io/maciejewiczow/lva-peripheral-sounds:master
+    container_name: lva-peripheral-sounds
+    restart: unless-stopped
+    volumes:
+      - ${LVA_XDG_RUNTIME_DIR:-/run/user/1000}:${LVA_XDG_RUNTIME_DIR:-/run/user/1000}
+      - /path/to/sounds:/app/sounds:ro
+    group_add:
+      - audio
+    env_file: .env
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LVA_WS_URL=ws://localhost:6055
+    network_mode: host
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "main.py"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    depends_on:
+      linux-voice-assistant:
+        condition: service_healthy
+
+  linux-voice-assistant:
+    container_name: linux-voice-assistant
+    image: "${LVA_IMAGE:-ghcr.io/ohf-voice/linux-voice-assistant}:${LVA_IMAGE_TAG:-latest}"
+    restart: unless-stopped
+    network_mode: "host"
+    user: "${LVA_USER_ID:-1000}:${LVA_USER_GROUP:-1000}"
+    environment:
+      - XDG_RUNTIME_DIR=${LVA_XDG_RUNTIME_DIR:-/run/user/1000}
+      - PULSE_SERVER=${LVA_PULSE_SERVER:-/run/user/1000/pulse/native}
+      - PULSE_COOKIE=${LVA_PULSE_COOKIE:-/run/user/1000/pulse/cookie}
+    env_file: ${LVA_ENV_FILE:-.env.lva}
+    group_add:
+      - audio
+    cap_add:
+      - SYS_NICE
+    volumes:
+      - ./wakeword/data:/app/local
+      - ./wakeword/custom:/app/wakewords/custom
+      - ./configuration:/app/configuration
+      - ./custom_sounds:/app/sounds/custom
+      # Time and zone
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - ${LVA_XDG_RUNTIME_DIR:-/run/user/1000}:${LVA_XDG_RUNTIME_DIR:-/run/user/1000}
+    healthcheck:
+      test:
+        - CMD
+        - .venv/bin/python
+        - -c
+        - |
+          from websockets.sync.client import connect
+
+          # wait for the peripheral api to be available before starting other containers
+          with connect("ws://localhost:6055", open_timeout=2, close_timeout=1) as ws:
+            pass
+
+      interval: 60s
+      timeout: 10s
+      retries: 5
+      start_period: 90s

@@ -1,0 +1,13 @@
+[project]
+name = "lva-peripheral-sounds"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.14"
+dependencies = [
+    "websockets>=16.0",
+    "pydantic>=2.11",
+    "pydantic-settings>=2.16.3",
+]
+
+[tool.ruff.lint]
+ignore = ["EXE002"]
