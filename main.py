@@ -51,7 +51,6 @@ def play_random_sound(pattern: str | None):
         subprocess.Popen(
             [player, str(sound)],
             stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
         )
     except OSError:
         log.exception("Failed to start sound player")

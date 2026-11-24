@@ -11,4 +11,4 @@ WORKDIR /app
 
 RUN uv sync
 
-CMD uv run main.py
+CMD ["/app/.venv/bin/python", "/app/main.py"]

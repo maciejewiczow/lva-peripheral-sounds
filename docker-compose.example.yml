@@ -3,6 +3,7 @@ services:
     image: ghcr.io/maciejewiczow/lva-peripheral-sounds:master
     container_name: lva-peripheral-sounds
     restart: unless-stopped
+    user: "${LVA_USER_ID:-1000}:${LVA_USER_GROUP:-1000}"
     volumes:
       - ${LVA_XDG_RUNTIME_DIR:-/run/user/1000}:${LVA_XDG_RUNTIME_DIR:-/run/user/1000}
       - /path/to/sounds:/app/sounds:ro
@@ -12,6 +13,9 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - LVA_SOUNDS_WS_URL=ws://localhost:6055
+      - XDG_RUNTIME_DIR=${LVA_XDG_RUNTIME_DIR:-/run/user/1000}
+      - PULSE_SERVER=${LVA_PULSE_SERVER:-/run/user/1000/pulse/native}
+      - PULSE_COOKIE=${LVA_PULSE_COOKIE:-/run/user/1000/pulse/cookie}
     network_mode: host
     healthcheck:
       test: ["CMD", "pgrep", "-f", "main.py"]
